@@ -114,7 +114,7 @@ public class Freesia implements PacketListener {
         tracker.addVirtualPlayerTrackerEventListener(mapperManager::onVirtualPlayerTrackerUpdate);
 
         virtualPlayerManager.init();
-        
+
         citizensMessageReceiver = new com.nguyendevs.freesia.velocity.network.misc.CitizensMessageReceiver();
         this.proxyServer.getEventManager().register(this, citizensMessageReceiver);
 
@@ -122,20 +122,22 @@ public class Freesia implements PacketListener {
         try {
             if (FreesiaSecurityConfig.enableTls) {
                 sslContext = com.nguyendevs.freesia.common.ServerSslUtils.createServerContext(
-                    FreesiaSecurityConfig.useSelfSigned, 
-                    java.nio.file.Paths.get(FreesiaConstants.FileConstants.PLUGIN_DIR.getAbsolutePath()).resolve(FreesiaSecurityConfig.certPath).toFile().getAbsolutePath(), 
-                    java.nio.file.Paths.get(FreesiaConstants.FileConstants.PLUGIN_DIR.getAbsolutePath()).resolve(FreesiaSecurityConfig.keyPath).toFile().getAbsolutePath(),
-                    java.nio.file.Paths.get(FreesiaConstants.FileConstants.PLUGIN_DIR.getAbsolutePath()).resolve(FreesiaSecurityConfig.trustWorkerCertPath).toFile().getAbsolutePath()
-                );
+                        FreesiaSecurityConfig.useSelfSigned,
+                        java.nio.file.Paths.get(FreesiaConstants.FileConstants.PLUGIN_DIR.getAbsolutePath())
+                                .resolve(FreesiaSecurityConfig.certPath).toFile().getAbsolutePath(),
+                        java.nio.file.Paths.get(FreesiaConstants.FileConstants.PLUGIN_DIR.getAbsolutePath())
+                                .resolve(FreesiaSecurityConfig.keyPath).toFile().getAbsolutePath(),
+                        java.nio.file.Paths.get(FreesiaConstants.FileConstants.PLUGIN_DIR.getAbsolutePath())
+                                .resolve(FreesiaSecurityConfig.trustWorkerCertPath).toFile().getAbsolutePath());
             }
         } catch (Exception e) {
             LOGGER.error("Failed to initialize SSL context!", e);
         }
         com.nguyendevs.freesia.common.communicating.FreesiaIpFilterHandler ipFilter = new com.nguyendevs.freesia.common.communicating.FreesiaIpFilterHandler(
                 FreesiaSecurityConfig.enableIpFilter,
-                FreesiaSecurityConfig.allowedWorkerIps
-        );
-        masterServer = new NettySocketServer(FreesiaConfig.masterServiceAddress, c -> new MasterServerMessageHandler(), sslContext, ipFilter);
+                FreesiaSecurityConfig.allowedWorkerIps);
+        masterServer = new NettySocketServer(FreesiaConfig.masterServiceAddress, c -> new MasterServerMessageHandler(),
+                sslContext, ipFilter);
         masterServer.bind();
 
         LOGGER.info("Initiating client kicker.");
@@ -192,6 +194,9 @@ public class Freesia implements PacketListener {
         final byte[] data = event.getData();
 
         if ((identifier instanceof MinecraftChannelIdentifier mineId) && (event.getSource() instanceof Player player)) {
+            if (!mineId.equals(YsmMapperPayloadManager.YSM_CHANNEL_KEY_VELOCITY)) {
+                return;
+            }
             event.setResult(PluginMessageEvent.ForwardResult.handled());
             mapperManager.onPluginMessageIn(player, mineId, data);
         }
