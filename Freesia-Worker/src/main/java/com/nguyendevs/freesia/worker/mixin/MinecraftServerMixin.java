@@ -34,6 +34,10 @@ public abstract class MinecraftServerMixin {
     @Inject(method = "stopServer", at = @At(value = "HEAD"))
     public void onServerStop(CallbackInfo ci) {
         this.shouldPollTask = true;
+
+        if (ServerLoader.clientInstance != null) {
+            ServerLoader.clientInstance.shutdown();
+        }
     }
 
     @Inject(method = "pollTaskInternal", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/ServerTickRateManager;isSprinting()Z", shift = At.Shift.BEFORE), cancellable = true)
