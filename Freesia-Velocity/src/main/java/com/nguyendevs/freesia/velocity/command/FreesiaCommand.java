@@ -94,7 +94,7 @@ public class FreesiaCommand {
                                                 source.sendMessage(Freesia.languageManager.i18n(
                                                         FreesiaConstants.LanguageConstants.WORKER_COMMAND_FEEDBACK,
                                                         List.of("worker_name", "feedback"),
-                                                        List.of(workerName, feedback.toString())));
+                                                        List.of(workerName, feedback)));
                                             });
                                             return Command.SINGLE_SUCCESS;
                                         }))))

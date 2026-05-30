@@ -102,7 +102,7 @@ public class FreesiaCommand extends Command implements TabExecutor {
                 return;
             }
             sendMessage(sender, Freesia.languageManager.i18n(FreesiaConstants.LanguageConstants.WORKER_COMMAND_FEEDBACK,
-                    List.of("worker_name", "feedback"), List.of(workerName, feedback.toString())));
+                    List.of("worker_name", "feedback"), List.of(workerName, feedback)));
         });
     }
 
