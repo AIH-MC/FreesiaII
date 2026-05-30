@@ -3,7 +3,7 @@ package com.nguyendevs.freesia.common.communicating.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import com.nguyendevs.freesia.common.communicating.BuiltinMessageRegitres;
+import com.nguyendevs.freesia.common.communicating.BuiltinMessageRegistries;
 import com.nguyendevs.freesia.common.communicating.message.IMessage;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +15,7 @@ public class MessageDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, @NotNull ByteBuf byteBuf, List<Object> list) throws Exception {
         final int packetId = byteBuf.readInt();
-        final Supplier<? extends IMessage<?>> packetCreator = BuiltinMessageRegitres.getMessageCreator(packetId);
+        final Supplier<? extends IMessage<?>> packetCreator = BuiltinMessageRegistries.getMessageCreator(packetId);
 
         try {
             final IMessage<?> wrapped = packetCreator.get();
