@@ -77,17 +77,21 @@ public class TrackerProcessor implements PluginMessageListener, Listener {
     public void notifyTrackerUpdate(UUID watcher, UUID beWatched) {
         final FriendlyByteBuf wrappedUpdatePacket = new FriendlyByteBuf(Unpooled.buffer());
 
-        wrappedUpdatePacket.writeVarInt(2);
-        wrappedUpdatePacket.writeUUID(beWatched);
-        wrappedUpdatePacket.writeUUID(watcher);
+        try {
+            wrappedUpdatePacket.writeVarInt(2);
+            wrappedUpdatePacket.writeUUID(beWatched);
+            wrappedUpdatePacket.writeUUID(watcher);
 
-        final Player payload = Utils.randomPlayerIfNotFound(watcher);
+            final Player payload = Utils.randomPlayerIfNotFound(watcher);
 
-        if (payload == null) {
-            return;
+            if (payload == null) {
+                return;
+            }
+
+            payload.sendPluginMessage(FreesiaBackend.INSTANCE, CHANNEL_NAME, wrappedUpdatePacket.getBytes());
+        } finally {
+            wrappedUpdatePacket.release();
         }
-
-        payload.sendPluginMessage(FreesiaBackend.INSTANCE, CHANNEL_NAME, wrappedUpdatePacket.getBytes());
     }
 
     @Override
@@ -98,36 +102,44 @@ public class TrackerProcessor implements PluginMessageListener, Listener {
 
         final FriendlyByteBuf packetData = new FriendlyByteBuf(Unpooled.wrappedBuffer(data));
 
-        if (packetData.readVarInt() == 1) {
-            final int callbackId = packetData.readVarInt();
-            final UUID requestedPlayerUUID = packetData.readUUID();
+        try {
+            if (packetData.readVarInt() == 1) {
+                final int callbackId = packetData.readVarInt();
+                final UUID requestedPlayerUUID = packetData.readUUID();
 
-            final Player toScan = Objects.requireNonNull(Bukkit.getPlayer(requestedPlayerUUID));
+                final Player toScan = Objects.requireNonNull(Bukkit.getPlayer(requestedPlayerUUID));
 
-            final Set<UUID> cachedViewers = this.entityViewers.get(requestedPlayerUUID);
-            final Set<UUID> result = cachedViewers != null ? new HashSet<>(cachedViewers) : new HashSet<>();
+                final Set<UUID> cachedViewers = this.entityViewers.get(requestedPlayerUUID);
+                final Set<UUID> result = cachedViewers != null ? new HashSet<>(cachedViewers) : new HashSet<>();
 
-            final CyanidinTrackerScanEvent trackerScanEvent = new CyanidinTrackerScanEvent(result, toScan);
+                final CyanidinTrackerScanEvent trackerScanEvent = new CyanidinTrackerScanEvent(result, toScan);
 
-            sender.getScheduler().execute(
-                    FreesiaBackend.INSTANCE,
-                    () -> {
-                        Bukkit.getPluginManager().callEvent(trackerScanEvent);
+                sender.getScheduler().execute(
+                        FreesiaBackend.INSTANCE,
+                        () -> {
+                            Bukkit.getPluginManager().callEvent(trackerScanEvent);
 
-                        final FriendlyByteBuf reply = new FriendlyByteBuf(Unpooled.buffer());
+                            final FriendlyByteBuf reply = new FriendlyByteBuf(Unpooled.buffer());
 
-                        reply.writeVarInt(0);
-                        reply.writeVarInt(callbackId);
-                        reply.writeVarInt(result.size());
+                            try {
+                                reply.writeVarInt(0);
+                                reply.writeVarInt(callbackId);
+                                reply.writeVarInt(result.size());
 
-                        for (UUID uuid : result) {
-                            reply.writeUUID(uuid);
-                        }
+                                for (UUID uuid : result) {
+                                    reply.writeUUID(uuid);
+                                }
 
-                        sender.sendPluginMessage(FreesiaBackend.INSTANCE, CHANNEL_NAME, reply.getBytes());
-                    },
-                    null,
-                    1);
+                                sender.sendPluginMessage(FreesiaBackend.INSTANCE, CHANNEL_NAME, reply.getBytes());
+                            } finally {
+                                reply.release();
+                            }
+                        },
+                        null,
+                        1);
+            }
+        } finally {
+            packetData.release();
         }
     }
 
