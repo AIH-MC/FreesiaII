@@ -87,7 +87,7 @@ public class NettySocketClient {
                                     channel.pipeline().addLast(NettySocketClient.this.handlerCreator.apply(channel));
                                 }
                             })
-                            .connect(this.masterAddress.getHostName(), this.masterAddress.getPort())
+                            .connect(this.masterAddress.getHostString(), this.masterAddress.getPort())
                             .sync();
                     this.isConnected = true;
                 } catch (Exception e) {

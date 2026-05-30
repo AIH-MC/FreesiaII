@@ -36,7 +36,7 @@ public class NettySocketServer {
                         channel.pipeline().addLast(NettySocketServer.this.handlerCreator.apply(channel));
                     }
                 })
-                .bind(this.bindAddress.getHostName(), this.bindAddress.getPort())
+                .bind(this.bindAddress.getHostString(), this.bindAddress.getPort())
                 .awaitUninterruptibly();
     }
 

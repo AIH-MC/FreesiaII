@@ -19,10 +19,10 @@ public class FreesiaConfig {
     private static void loadOrDefaultValues() {
         defaultsApplied = false;
         workerMSessionAddress = new InetSocketAddress(
-                get("worker.worker_msession_ip", workerMSessionAddress.getHostName()),
+                get("worker.worker_msession_ip", workerMSessionAddress.getHostString()),
                 get("worker.worker_msession_port", workerMSessionAddress.getPort()));
         masterServiceAddress = new InetSocketAddress(
-                get("worker.worker_master_ip", masterServiceAddress.getHostName()),
+                get("worker.worker_master_ip", masterServiceAddress.getHostString()),
                 get("worker.worker_master_port", masterServiceAddress.getPort()));
         languageName = get("messages.language", languageName);
 
