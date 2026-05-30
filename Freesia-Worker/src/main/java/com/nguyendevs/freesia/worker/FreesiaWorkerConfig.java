@@ -30,7 +30,7 @@ public class FreesiaWorkerConfig {
     private static void loadOrDefaultValues() {
         defaultsApplied = false;
         masterServiceAddress = new InetSocketAddress(
-                get("worker.worker_master_ip", masterServiceAddress.getHostName()),
+                get("worker.worker_master_ip", masterServiceAddress.getHostString()),
                 get("worker.worker_master_port", masterServiceAddress.getPort())
         );
         reconnectInterval = get("worker.controller_reconnect_interval", reconnectInterval);
