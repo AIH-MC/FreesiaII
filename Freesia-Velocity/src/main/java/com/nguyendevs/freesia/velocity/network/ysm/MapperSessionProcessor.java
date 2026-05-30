@@ -290,8 +290,18 @@ public class MapperSessionProcessor implements SessionListener {
     }
 
     protected void waitForDisconnected() {
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(10);
+        int spinCount = 0;
         while (SESSION_HANDLE.getVolatile(this) != null) {
-            Thread.onSpinWait();
+            if (System.nanoTime() > deadline) {
+                break;
+            }
+            if (spinCount++ < 100) {
+                Thread.onSpinWait();
+            } else {
+                spinCount = 0;
+                Thread.yield();
+            }
         }
     }
 

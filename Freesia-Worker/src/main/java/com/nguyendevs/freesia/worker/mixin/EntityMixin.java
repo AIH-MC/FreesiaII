@@ -54,7 +54,13 @@ public abstract class EntityMixin {
             } else {
                 CompletableFuture<CompoundTag> callback = new CompletableFuture<>();
                 ServerLoader.workerConnection.getPlayerData(player.getUUID(), callback::complete);
-                CompoundTag got = callback.join();
+                CompoundTag got;
+                try {
+                    got = callback.orTimeout(10, java.util.concurrent.TimeUnit.SECONDS).join();
+                } catch (Exception e) {
+                    EntryPoint.LOGGER_INST.warn("Timeout fetching player data for {}", player.getUUID());
+                    got = null;
+                }
 
                 if (got != null) {
                     ServerLoader.playerDataCache.put(player.getUUID(), got);

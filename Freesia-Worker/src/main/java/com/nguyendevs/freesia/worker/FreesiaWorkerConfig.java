@@ -21,14 +21,16 @@ public class FreesiaWorkerConfig {
     public static String workerCertPath = "security/worker_cert.pem";
     public static String workerKeyPath = "security/worker_key.pem";
     private static CommentedFileConfig CONFIG_INSTANCE;
+    private static boolean defaultsApplied;
 
     static {
         CONFIG_FILE_DIR.mkdirs();
     }
 
     private static void loadOrDefaultValues() {
+        defaultsApplied = false;
         masterServiceAddress = new InetSocketAddress(
-                get("worker.worker_master_ip", masterServiceAddress.getHostName()),
+                get("worker.worker_master_ip", masterServiceAddress.getHostString()),
                 get("worker.worker_master_port", masterServiceAddress.getPort())
         );
         reconnectInterval = get("worker.controller_reconnect_interval", reconnectInterval);
@@ -43,6 +45,7 @@ public class FreesiaWorkerConfig {
     private static <T> T get(String key, T def) {
         if (!CONFIG_INSTANCE.contains(key)) {
             CONFIG_INSTANCE.add(key, def);
+            defaultsApplied = true;
             return def;
         }
 
@@ -67,7 +70,9 @@ public class FreesiaWorkerConfig {
             LOGGER.error("Failed to load config file!", e);
         }
 
-        CONFIG_INSTANCE.save();
+        if (defaultsApplied) {
+            CONFIG_INSTANCE.save();
+        }
     }
 }
 

@@ -47,12 +47,12 @@ public abstract class NettyServerChannelHandlerLayer extends SimpleChannelInboun
     }
 
     public void sendMessage(IMessage<NettyClientChannelHandlerLayer> packet) {
-        if (!this.channel.isOpen()) {
+        if (this.channel == null) {
+            this.pendingPackets.offer(packet);
             return;
         }
 
-        if (this.channel == null) {
-            this.pendingPackets.offer(packet);
+        if (!this.channel.isOpen()) {
             return;
         }
 

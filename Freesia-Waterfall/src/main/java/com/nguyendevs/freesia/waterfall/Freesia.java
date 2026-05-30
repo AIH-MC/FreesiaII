@@ -150,6 +150,23 @@ public class Freesia extends Plugin implements PacketListener, Listener {
 
     }
 
+    @Override
+    public void onDisable() {
+        LOGGER.info("Shutting down Freesia Waterfall plugin...");
+
+        if (kickChecker != null) {
+            kickChecker.signalStop();
+        }
+
+        if (masterServer != null) {
+            masterServer.shutdown();
+        }
+
+        getProxy().getPluginManager().unregisterListeners(this);
+
+        LOGGER.info("Freesia Waterfall plugin shutdown complete.");
+    }
+
     @EventHandler
     public void onPlayerDisconnect(PlayerDisconnectEvent event) {
         final ProxiedPlayer targetPlayer = event.getPlayer();
@@ -173,19 +190,18 @@ public class Freesia extends Plugin implements PacketListener, Listener {
     public void onServerConnected(ServerConnectedEvent event) {
         final ProxiedPlayer player = event.getPlayer();
 
-        final boolean potentialDisconnected = mapperManager.hasMapperSession(player);
-        final YsmMapperPayloadManager.SavedProxyState oldState = mapperManager
-                .extractSavedProxyStateAndDisconnect(player);
-
-        if (potentialDisconnected) {
-            getLogger().info("Player " + player.getName() + " has changed backend server. Reconnecting mapper session");
-        } else {
-            getLogger().info("Initiating mapper session for player " + player.getName());
-        }
-
-        mapperManager.initMapperPacketProcessor(player, oldState);
-
         getProxy().getScheduler().runAsync(this, () -> {
+            final boolean potentialDisconnected = mapperManager.hasMapperSession(player);
+            final YsmMapperPayloadManager.SavedProxyState oldState = mapperManager
+                    .extractSavedProxyStateAndDisconnect(player);
+
+            if (potentialDisconnected) {
+                getLogger().info("Player " + player.getName() + " has changed backend server. Reconnecting mapper session");
+            } else {
+                getLogger().info("Initiating mapper session for player " + player.getName());
+            }
+
+            mapperManager.initMapperPacketProcessor(player, oldState);
             mapperManager.autoCreateMapper(player);
         });
     }

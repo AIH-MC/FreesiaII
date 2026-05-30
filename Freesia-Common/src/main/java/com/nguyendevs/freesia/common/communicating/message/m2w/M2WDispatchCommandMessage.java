@@ -34,7 +34,13 @@ public class M2WDispatchCommandMessage implements IMessage<NettyClientChannelHan
 
     @Override
     public void process(NettyClientChannelHandlerLayer handler) {
-        handler.dispatchCommand(this.command).whenComplete((result, command) -> handler.getClient().sendToMaster(new W2MCommandResultMessage(this.traceId, result)));
+        handler.dispatchCommand(this.command).whenComplete((result, throwable) -> {
+            if (throwable != null) {
+                handler.getClient().sendToMaster(new W2MCommandResultMessage(this.traceId, throwable.getMessage()));
+                return;
+            }
+            handler.getClient().sendToMaster(new W2MCommandResultMessage(this.traceId, result));
+        });
     }
 }
 

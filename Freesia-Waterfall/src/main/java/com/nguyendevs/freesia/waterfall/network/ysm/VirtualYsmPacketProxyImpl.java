@@ -29,12 +29,12 @@ public class VirtualYsmPacketProxyImpl extends YsmPacketProxyLayer {
 
     @Override
     public ProxyComputeResult processS2C(Key channelKey, ByteBuf copiedPacketData) {
-        return null;
+        return ProxyComputeResult.ofPass();
     }
 
     @Override
     public ProxyComputeResult processC2S(Key channelKey, ByteBuf copiedPacketData) {
-        return null;
+        return ProxyComputeResult.ofPass();
     }
 }
 

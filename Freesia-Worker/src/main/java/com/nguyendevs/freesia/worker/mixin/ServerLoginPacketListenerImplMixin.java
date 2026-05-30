@@ -8,8 +8,10 @@ import net.minecraft.server.network.ServerLoginPacketListenerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerLoginPacketListenerImpl.class)
 public abstract class ServerLoginPacketListenerImplMixin {
@@ -21,8 +23,8 @@ public abstract class ServerLoginPacketListenerImplMixin {
     @Shadow
     abstract void startClientVerification(GameProfile gameProfile);
 
-    @Overwrite
-    public void handleHello(@NotNull ServerboundHelloPacket serverboundHelloPacket) {
+    @Inject(method = "handleHello", at = @At("HEAD"), cancellable = true)
+    public void onHandleHello(@NotNull ServerboundHelloPacket serverboundHelloPacket, CallbackInfo ci) {
         this.requestedUsername = serverboundHelloPacket.name();
         final GameProfile requestedProfile = new GameProfile(serverboundHelloPacket.profileId(), this.requestedUsername);
 
@@ -34,6 +36,8 @@ public abstract class ServerLoginPacketListenerImplMixin {
             EntryPoint.LOGGER_INST.info("Pre-loaded player data for player {}.", requestedProfile.getName());
             this.startClientVerification(requestedProfile);
         });
+
+        ci.cancel();
     }
 }
 

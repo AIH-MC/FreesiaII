@@ -14,13 +14,15 @@ public class FreesiaConfig {
     public static boolean debug = false;
 
     private static CommentedFileConfig CONFIG_INSTANCE;
+    private static boolean defaultsApplied;
 
     private static void loadOrDefaultValues() {
+        defaultsApplied = false;
         workerMSessionAddress = new InetSocketAddress(
-                get("worker.worker_msession_ip", workerMSessionAddress.getHostName()),
+                get("worker.worker_msession_ip", workerMSessionAddress.getHostString()),
                 get("worker.worker_msession_port", workerMSessionAddress.getPort()));
         masterServiceAddress = new InetSocketAddress(
-                get("worker.worker_master_ip", masterServiceAddress.getHostName()),
+                get("worker.worker_master_ip", masterServiceAddress.getHostString()),
                 get("worker.worker_master_port", masterServiceAddress.getPort()));
         languageName = get("messages.language", languageName);
 
@@ -32,6 +34,7 @@ public class FreesiaConfig {
     private static <T> T get(String key, T def) {
         if (!CONFIG_INSTANCE.contains(key)) {
             CONFIG_INSTANCE.add(key, def);
+            defaultsApplied = true;
             return def;
         }
 
@@ -56,6 +59,8 @@ public class FreesiaConfig {
             Freesia.LOGGER.error("Failed to load config file!", e);
         }
 
-        CONFIG_INSTANCE.save();
+        if (defaultsApplied) {
+            CONFIG_INSTANCE.save();
+        }
     }
 }

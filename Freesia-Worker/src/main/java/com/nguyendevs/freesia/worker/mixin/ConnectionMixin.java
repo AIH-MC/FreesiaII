@@ -19,7 +19,6 @@ import net.minecraft.network.protocol.login.ClientboundHelloPacket;
 import net.minecraft.network.protocol.login.ClientboundLoginCompressionPacket;
 import net.minecraft.network.protocol.login.ClientboundLoginDisconnectPacket;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -32,8 +31,8 @@ public abstract class ConnectionMixin {
     @Shadow
     private Channel channel;
 
-    @Overwrite
-    public void setupCompression(int i, boolean bl) {
+    @Inject(method = "setupCompression", at = @At("HEAD"), cancellable = true)
+    public void onSetupCompression(int i, boolean bl, CallbackInfo ci) {
         if (i >= 0) {
             ChannelHandler var4 = this.channel.pipeline().get("decompress");
             if (var4 instanceof CompressionDecoder compressionDecoder) {
@@ -57,6 +56,7 @@ public abstract class ConnectionMixin {
             }
         }
 
+        ci.cancel();
     }
 
     @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;)V", at = @At(value = "HEAD"), cancellable = true)

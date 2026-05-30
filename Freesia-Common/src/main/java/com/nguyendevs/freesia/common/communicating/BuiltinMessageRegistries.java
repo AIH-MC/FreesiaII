@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-public class BuiltinMessageRegitres {
+public class BuiltinMessageRegistries {
     private static final Map<Integer, Supplier<? extends IMessage<?>>> id2MessageCreators = new ConcurrentHashMap<>();
     private static final Map<Class<? extends IMessage<?>>, Integer> messageClasses2Ids = new ConcurrentHashMap<>();
     private static final AtomicInteger idGenerator = new AtomicInteger(0);
