@@ -91,7 +91,7 @@ public class WorkerMessageHandlerImpl extends NettyClientChannelHandlerLayer {
                 }
 
                 try {
-                    decoded = (CompoundTag) NbtIo.readAnyTag(new DataInputStream(new ByteArrayInputStream(content)), NbtAccounter.unlimitedHeap());
+                    decoded = (CompoundTag) NbtIo.readAnyTag(new DataInputStream(new ByteArrayInputStream(content)), NbtAccounter.create(1048576L));
                 } catch (Exception e) {
                     EntryPoint.LOGGER_INST.error("Failed to decode nbt!", e);
                 }
