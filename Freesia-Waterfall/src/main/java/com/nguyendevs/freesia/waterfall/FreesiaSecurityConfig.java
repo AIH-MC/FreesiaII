@@ -14,8 +14,10 @@ public class FreesiaSecurityConfig {
     public static java.util.List<String> allowedWorkerIps = java.util.Arrays.asList("127.0.0.1", "192.168.1.5");
 
     private static CommentedFileConfig CONFIG_INSTANCE;
+    private static boolean defaultsApplied;
 
     private static void loadOrDefaultValues() {
+        defaultsApplied = false;
         enableTls = get("security.enable_tls", enableTls);
         useSelfSigned = get("security.use_self_signed", useSelfSigned);
         certPath = get("security.cert_path", certPath);
@@ -28,6 +30,7 @@ public class FreesiaSecurityConfig {
     private static <T> T get(String key, T def) {
         if (!CONFIG_INSTANCE.contains(key)) {
             CONFIG_INSTANCE.add(key, def);
+            defaultsApplied = true;
             return def;
         }
 
@@ -52,6 +55,8 @@ public class FreesiaSecurityConfig {
             Freesia.LOGGER.log(java.util.logging.Level.SEVERE, "Failed to load security config!", e);
         }
 
-        CONFIG_INSTANCE.save();
+        if (defaultsApplied) {
+            CONFIG_INSTANCE.save();
+        }
     }
 }
