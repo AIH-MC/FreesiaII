@@ -3,20 +3,23 @@ package com.nguyendevs.freesia.backend;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.Optional;
 import java.util.UUID;
 
 public class Utils {
     public static Player randomPlayerIfNotFound(UUID uuid) {
-        Player expected = uuid != null ? Bukkit.getPlayer(uuid) : null;
-
-        if (expected != null) {
-            return expected;
+        if (uuid != null) {
+            Player expected = Bukkit.getPlayer(uuid);
+            if (expected != null) {
+                return expected;
+            }
         }
 
-        final Optional<? extends Player> any = Bukkit.getOnlinePlayers().stream().findAny();
+        Player cached = FreesiaBackend.INSTANCE.getPayloadPlayer();
+        if (cached != null && cached.isOnline()) {
+            return cached;
+        }
 
-        return any.orElse(null);
+        return null;
     }
 }
 

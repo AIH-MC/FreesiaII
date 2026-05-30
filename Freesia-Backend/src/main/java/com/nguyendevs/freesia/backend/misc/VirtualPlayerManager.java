@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -29,20 +30,25 @@ public class VirtualPlayerManager implements PluginMessageListener, Listener {
         }
 
         final FriendlyByteBuf packetBuffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(data));
-        final byte packetId = packetBuffer.readByte();
 
-        if (packetId == 2) {
-            final int eventId = packetBuffer.readVarInt();
-            final boolean result = packetBuffer.readBoolean();
+        try {
+            final byte packetId = packetBuffer.readByte();
 
-            final Consumer<Boolean> removedCallback = this.pendingCallbacks.remove(eventId);
+            if (packetId == 2) {
+                final int eventId = packetBuffer.readVarInt();
+                final boolean result = packetBuffer.readBoolean();
 
-            if (removedCallback != null) {
-                removedCallback.accept(result);
-                return;
+                final Consumer<Boolean> removedCallback = this.pendingCallbacks.remove(eventId);
+
+                if (removedCallback != null) {
+                    removedCallback.accept(result);
+                    return;
+                }
+
+                FreesiaBackend.INSTANCE.getSLF4JLogger().warn("Received unknown callback for virtual player operations {}", eventId);
             }
-
-            FreesiaBackend.INSTANCE.getSLF4JLogger().warn("Received unknown callback for virtual player operations {}", eventId);
+        } finally {
+            packetBuffer.release();
         }
     }
 
@@ -50,67 +56,83 @@ public class VirtualPlayerManager implements PluginMessageListener, Listener {
         final FriendlyByteBuf packetBuffer = new FriendlyByteBuf(Unpooled.buffer());
         final int generatedEventId = this.eventIdGenerator.getAndIncrement();
 
-        packetBuffer.writeByte(4);
-        packetBuffer.writeVarInt(generatedEventId);
-        packetBuffer.writeUUID(playerUUID);
-        packetBuffer.writeBytes(data);
+        try {
+            packetBuffer.writeByte(4);
+            packetBuffer.writeVarInt(generatedEventId);
+            packetBuffer.writeUUID(playerUUID);
+            packetBuffer.writeBytes(data);
 
-        final Player payload = Utils.randomPlayerIfNotFound(null);
+            final Player payload = Utils.randomPlayerIfNotFound(null);
 
-        if (payload == null) {
-            return CompletableFuture.failedFuture(new IllegalStateException("Could not find a available payload"));
+            if (payload == null) {
+                return CompletableFuture.failedFuture(new IllegalStateException("Could not find a available payload"));
+            }
+
+            final CompletableFuture<Boolean> future = new CompletableFuture<>();
+            this.pendingCallbacks.put(generatedEventId, future::complete);
+
+            payload.sendPluginMessage(FreesiaBackend.INSTANCE, CHANNEL_NAME, packetBuffer.getBytes());
+
+            future.whenComplete((res, ex) -> this.pendingCallbacks.remove(generatedEventId));
+            return future.orTimeout(30, java.util.concurrent.TimeUnit.SECONDS);
+        } finally {
+            packetBuffer.release();
         }
-
-        final CompletableFuture<Boolean> future = new CompletableFuture<>();
-        this.pendingCallbacks.put(generatedEventId, future::complete);
-
-        payload.sendPluginMessage(FreesiaBackend.INSTANCE, CHANNEL_NAME, packetBuffer.getBytes());
-        return future;
     }
 
     public CompletableFuture<Boolean> removeVirtualPlayer(UUID playerUUID) {
         final FriendlyByteBuf packetBuffer = new FriendlyByteBuf(Unpooled.buffer());
         final int generatedEventId = this.eventIdGenerator.getAndIncrement();
 
-        packetBuffer.writeByte(1);
-        packetBuffer.writeVarInt(generatedEventId);
-        packetBuffer.writeUUID(playerUUID);
+        try {
+            packetBuffer.writeByte(1);
+            packetBuffer.writeVarInt(generatedEventId);
+            packetBuffer.writeUUID(playerUUID);
 
-        final Player payload = Utils.randomPlayerIfNotFound(null);
+            final Player payload = Utils.randomPlayerIfNotFound(null);
 
-        if (payload == null) {
-            return CompletableFuture.failedFuture(new IllegalStateException("Could not find a available payload"));
+            if (payload == null) {
+                return CompletableFuture.failedFuture(new IllegalStateException("Could not find a available payload"));
+            }
+
+            payload.sendPluginMessage(FreesiaBackend.INSTANCE, CHANNEL_NAME, packetBuffer.getBytes());
+
+            final CompletableFuture<Boolean> future = new CompletableFuture<>();
+
+            this.pendingCallbacks.put(generatedEventId, future::complete);
+
+            future.whenComplete((res, ex) -> this.pendingCallbacks.remove(generatedEventId));
+            return future.orTimeout(30, java.util.concurrent.TimeUnit.SECONDS);
+        } finally {
+            packetBuffer.release();
         }
-
-        payload.sendPluginMessage(FreesiaBackend.INSTANCE, CHANNEL_NAME, packetBuffer.getBytes());
-
-        final CompletableFuture<Boolean> future = new CompletableFuture<>();
-
-        this.pendingCallbacks.put(generatedEventId, future::complete);
-
-        return future;
     }
 
     public CompletableFuture<Boolean> addVirtualPlayer(UUID playerUUID, int entityId) {
         final FriendlyByteBuf packetBuffer = new FriendlyByteBuf(Unpooled.buffer());
         final int generatedEventId = this.eventIdGenerator.getAndIncrement();
 
-        packetBuffer.writeByte(0);
-        packetBuffer.writeVarInt(generatedEventId);
-        packetBuffer.writeVarInt(entityId);
-        packetBuffer.writeUUID(playerUUID);
+        try {
+            packetBuffer.writeByte(0);
+            packetBuffer.writeVarInt(generatedEventId);
+            packetBuffer.writeVarInt(entityId);
+            packetBuffer.writeUUID(playerUUID);
 
-        final Player payload = Utils.randomPlayerIfNotFound(null);
+            final Player payload = Utils.randomPlayerIfNotFound(null);
 
-        if (payload == null) {
-            return CompletableFuture.failedFuture(new IllegalStateException("Could not find a available payload"));
+            if (payload == null) {
+                return CompletableFuture.failedFuture(new IllegalStateException("Could not find a available payload"));
+            }
+
+            final CompletableFuture<Boolean> future = new CompletableFuture<>();
+            this.pendingCallbacks.put(generatedEventId, future::complete);
+
+            payload.sendPluginMessage(FreesiaBackend.INSTANCE, CHANNEL_NAME, packetBuffer.getBytes());
+
+            future.whenComplete((res, ex) -> this.pendingCallbacks.remove(generatedEventId));
+            return future.orTimeout(30, java.util.concurrent.TimeUnit.SECONDS);
+        } finally {
+            packetBuffer.release();
         }
-
-        final CompletableFuture<Boolean> future = new CompletableFuture<>();
-        this.pendingCallbacks.put(generatedEventId, future::complete);
-
-        payload.sendPluginMessage(FreesiaBackend.INSTANCE, CHANNEL_NAME, packetBuffer.getBytes());
-
-        return future;
     }
 }

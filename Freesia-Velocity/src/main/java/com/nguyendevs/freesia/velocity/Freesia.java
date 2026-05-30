@@ -15,6 +15,7 @@ import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.Player;
@@ -146,6 +147,23 @@ public class Freesia implements PacketListener {
         LOGGER.info("Registering commands");
         FreesiaCommand.register();
 
+    }
+
+    @Subscribe
+    public void onProxyShutdown(ProxyShutdownEvent event) {
+        LOGGER.info("Shutting down Freesia Velocity plugin...");
+
+        if (kickChecker != null) {
+            kickChecker.signalStop();
+        }
+
+        if (masterServer != null) {
+            masterServer.shutdown();
+        }
+
+        this.proxyServer.getEventManager().unregisterListeners(this);
+
+        LOGGER.info("Freesia Velocity plugin shutdown complete.");
     }
 
     @Subscribe

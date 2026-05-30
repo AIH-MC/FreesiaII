@@ -5,6 +5,7 @@ import com.nguyendevs.freesia.common.communicating.handler.NettyServerChannelHan
 import com.nguyendevs.freesia.common.communicating.message.IMessage;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 public class W2MWorkerInfoMessage implements IMessage<NettyServerChannelHandlerLayer> {
@@ -23,7 +24,7 @@ public class W2MWorkerInfoMessage implements IMessage<NettyServerChannelHandlerL
     public void writeMessageData(@NotNull ByteBuf buffer) {
         buffer.writeLong(workerUUID.getMostSignificantBits());
         buffer.writeLong(workerUUID.getLeastSignificantBits());
-        buffer.writeBytes(workerName.getBytes());
+        buffer.writeBytes(workerName.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -31,7 +32,7 @@ public class W2MWorkerInfoMessage implements IMessage<NettyServerChannelHandlerL
         workerUUID = new UUID(buffer.readLong(), buffer.readLong());
         byte[] bytes = new byte[buffer.readableBytes()];
         buffer.readBytes(bytes);
-        workerName = new String(bytes);
+        workerName = new String(bytes, StandardCharsets.UTF_8);
     }
 
     @Override

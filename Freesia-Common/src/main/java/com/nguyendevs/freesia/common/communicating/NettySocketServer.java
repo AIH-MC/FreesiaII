@@ -39,5 +39,13 @@ public class NettySocketServer {
                 .bind(this.bindAddress.getHostName(), this.bindAddress.getPort())
                 .awaitUninterruptibly();
     }
+
+    public void shutdown() {
+        if (this.channelFuture != null) {
+            this.channelFuture.channel().close().awaitUninterruptibly();
+        }
+        this.masterLoopGroup.shutdownGracefully();
+        this.workerLoopGroup.shutdownGracefully();
+    }
 }
 

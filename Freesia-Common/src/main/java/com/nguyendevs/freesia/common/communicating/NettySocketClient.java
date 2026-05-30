@@ -16,6 +16,8 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
 public class NettySocketClient {
+    private static final int MAX_PENDING_MESSAGES = 1024;
+
     private final EventLoopGroup clientEventLoopGroup = NettyUtils.eventLoopGroup();
     private final Class<? extends Channel> clientChannelType = NettyUtils.channelClass();
     private final InetSocketAddress masterAddress;
@@ -122,13 +124,23 @@ public class NettySocketClient {
         }
     }
 
+    public void shutdown() {
+        this.isConnected = false;
+        if (this.channel != null) {
+            this.channel.close().awaitUninterruptibly();
+        }
+        this.clientEventLoopGroup.shutdownGracefully();
+    }
+
     public void sendToMaster(IMessage<?> message) {
         if (this.channel == null) {
             throw new IllegalStateException("Not connected");
         }
 
         if (!this.channel.isActive()) {
-            this.packetFlushQueue.offer(message);
+            if (this.packetFlushQueue.size() < MAX_PENDING_MESSAGES) {
+                this.packetFlushQueue.offer(message);
+            }
             return;
         }
 

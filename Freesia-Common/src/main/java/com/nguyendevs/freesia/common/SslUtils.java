@@ -12,7 +12,7 @@ public class SslUtils {
         SslContextBuilder builder = SslContextBuilder.forClient();
 
         if (trustAll) {
-            EntryPoint.LOGGER_INST.info("\u001B[33m[Security] Client trusting all certificates (Insecure TrustManager)\u001B[0m");
+            EntryPoint.LOGGER_INST.warn("\u001B[31m[Security] WARNING: TLS certificate verification is DISABLED (trustAll=true). This is INSECURE and should only be used for development.\u001B[0m");
             builder.trustManager(InsecureTrustManagerFactory.INSTANCE);
         } else {
             File trustFile = new File(trustCertPath);
