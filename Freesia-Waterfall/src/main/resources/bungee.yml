@@ -1,5 +1,5 @@
 name: Freesia
-version: '1.0.3-YSM-2.6.4'
+version: '1.0.6-YSM-2.6.5'
 main: com.nguyendevs.freesia.waterfall.Freesia
 author: NguyenDevs, Earthme, HappyRespawnanchor, xiaozhangup
 description: YSM performance optimization proxy model for BungeeCord/Waterfall.
