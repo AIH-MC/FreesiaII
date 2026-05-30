@@ -44,6 +44,7 @@ public class ServerLoader implements DedicatedServerModInitializer {
 
         playerDataCache = CacheBuilder
                 .newBuilder()
+                .maximumSize(1000)
                 .expireAfterWrite(FreesiaWorkerConfig.playerDataCacheInvalidateIntervalSeconds, TimeUnit.SECONDS)
                 .build();
         io.netty.handler.ssl.SslContext sslContext = null;
