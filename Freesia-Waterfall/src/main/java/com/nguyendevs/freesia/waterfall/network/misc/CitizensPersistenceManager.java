@@ -31,15 +31,24 @@ public class CitizensPersistenceManager {
     }
 
     public void saveModelBinaryCache(Map<String, byte[]> cache) {
-        try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(MODEL_CACHE_FILE)))) {
+        final File tempFile = new File(MODEL_CACHE_FILE.getAbsolutePath() + ".tmp");
+        try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)))) {
             out.writeInt(cache.size());
             for (Map.Entry<String, byte[]> e : cache.entrySet()) {
                 out.writeUTF(e.getKey());
                 out.writeInt(e.getValue().length);
                 out.write(e.getValue());
             }
+            out.flush();
         } catch (Exception e) {
             Freesia.LOGGER.warning("[Citizens] Failed to save citizens_model_cache.dat: " + e.getMessage());
+            tempFile.delete();
+            return;
+        }
+
+        if (!tempFile.renameTo(MODEL_CACHE_FILE)) {
+            Freesia.LOGGER.warning("[Citizens] Failed to rename temp cache file");
+            tempFile.delete();
         }
     }
 }
