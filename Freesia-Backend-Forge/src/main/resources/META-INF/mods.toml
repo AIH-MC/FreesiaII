@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="freesia_backend"
+version="${file.jarVersion}"
+displayName="Freesia Backend"
+displayTest="IGNORE_ALL_VERSION"
+authors="nguyendevs"
+description='''
+Freesia Backend for Forge 1.20.1
+'''
+
+[[dependencies.freesia_backend]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.freesia_backend]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1]"
+    ordering="NONE"
+    side="BOTH"
