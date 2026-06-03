@@ -47,7 +47,6 @@ public final class FreesiaBackend {
     );
 
     private static final String PROTOCOL_VERSION = "1";
-    public static final ResourceLocation YSM_CHANNEL = new ResourceLocation("yes_steve_model", "2_6_0");
     
     public static final EventNetworkChannel TRACKER_CHANNEL = NetworkRegistry.ChannelBuilder
             .named(new ResourceLocation("freesia:tracker_sync"))
@@ -160,28 +159,6 @@ public final class FreesiaBackend {
             channel.pipeline().addBefore("packet_handler", "freesia_packet_fixer", new ChannelOutboundHandlerAdapter() {
                 @Override
                 public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                    if (msg instanceof ClientboundCustomPayloadPacket packet) {
-                        if (packet.getIdentifier().equals(YSM_CHANNEL)) {
-                            ByteBuf data = packet.getData();
-                            if (data.readableBytes() > 1) {
-                                int first = data.getByte(data.readerIndex());
-                                // 如果第一个字节不是 YSM 的合法包 ID (21, 4, 3, 51)，说明它带有 Forge 鉴别器
-                                if (first != 21 && first != 4 && first != 3 && first != 51) {
-                                    ByteBuf strippedData = data.copy();
-                                    try {
-                                        strippedData.readByte(); // 剥离 1 字节鉴别器
-                                        ClientboundCustomPayloadPacket newPacket = new ClientboundCustomPayloadPacket(YSM_CHANNEL, new net.minecraft.network.FriendlyByteBuf(strippedData));
-                                        super.write(ctx, newPacket, promise);
-                                        return;
-                                    } catch (Exception e) {
-                                        strippedData.release();
-                                        throw e;
-                                    }
-                                    // 注意：这里不手动 release strippedData，因为 newPacket 会接管它
-                                }
-                            }
-                        }
-                    }
                     super.write(ctx, msg, promise);
                 }
             });
