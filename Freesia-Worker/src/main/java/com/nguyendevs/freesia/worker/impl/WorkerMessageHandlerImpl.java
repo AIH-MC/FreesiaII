@@ -42,9 +42,20 @@ public class WorkerMessageHandlerImpl extends NettyClientChannelHandlerLayer {
     public void channelActive(@NotNull ChannelHandlerContext ctx) {
         super.channelActive(ctx);
 
-        this.getClient().sendToMaster(new W2MWorkerInfoMessage(ServerLoader.workerInfoFile.workerUUID(), ServerLoader.workerInfoFile.workerName()));
+        this.getClient().sendToMaster(new W2MWorkerInfoMessage(ServerLoader.workerInfoFile.workerUUID(), ServerLoader.workerInfoFile.workerName(), isOysmModelUploadAllowed()));
 
         ServerLoader.workerConnection = this;
+    }
+
+    private static boolean isOysmModelUploadAllowed() {
+        try {
+            Class<?> serverModelManager = Class.forName("com.elfmcys.yesstevemodel.model.ServerModelManager");
+            Object value = serverModelManager.getMethod("isModelUploadAllowed").invoke(null);
+            return value instanceof Boolean allowed && allowed;
+        } catch (ReflectiveOperationException | LinkageError e) {
+            EntryPoint.LOGGER_INST.info("OYSM ServerModelManager not available, reporting model upload disabled to master");
+            return false;
+        }
     }
 
     @Override

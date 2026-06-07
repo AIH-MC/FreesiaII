@@ -64,6 +64,9 @@ public class FreesiaConstants {
             public static final String HAND_SHAKE_REQUEST = "handshake_request";
             public static final String MOLANG_EXECUTE_REQ = "molang_execute_req";
             public static final String ANIMATION_REQ = "animation_req";
+            public static final String MODEL_UPLOAD_START = "model_upload_start";
+            public static final String MODEL_UPLOAD_CHUNK = "model_upload_chunk";
+            public static final String MODEL_UPLOAD_FINISH = "model_upload_finish";
         }
 
         public static final class Clientbound {
@@ -74,6 +77,10 @@ public class FreesiaConstants {
             public static final String MOLANG_EXECUTE = "molang_execute";
 
             public static final String ANIMATION = "animation";
+
+            public static final String MODEL_UPLOAD_START = "model_upload_start";
+
+            public static final String MODEL_UPLOAD_RESULT = "model_upload_result";
         }
     }
 }

@@ -77,7 +77,7 @@ public abstract class NettyServerChannelHandlerLayer extends SimpleChannelInboun
 
     public abstract void onCommandDispatchResult(int traceId, @Nullable String result);
 
-    public abstract void updateWorkerInfo(UUID workerUUID, String workerName);
+    public abstract void updateWorkerInfo(UUID workerUUID, String workerName, boolean allowModelUpload);
 
     public abstract void onCommandFromWorker(String command);
 }

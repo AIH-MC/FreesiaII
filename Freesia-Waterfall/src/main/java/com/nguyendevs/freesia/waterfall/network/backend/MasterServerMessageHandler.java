@@ -32,6 +32,7 @@ public class MasterServerMessageHandler extends NettyServerChannelHandlerLayer {
     private volatile UUID workerUUID;
     private volatile String workerName;
 
+    private volatile boolean allowModelUpload;
     private volatile boolean commandDispatcherRetired = false;
     private final StampedLock commandDispatchCallbackLock = new StampedLock();
 
@@ -76,6 +77,10 @@ public class MasterServerMessageHandler extends NettyServerChannelHandlerLayer {
 
     public String getWorkerName() {
         return this.workerName;
+    }
+
+    public boolean isAllowModelUpload() {
+        return this.allowModelUpload;
     }
 
     @Override
@@ -157,11 +162,12 @@ public class MasterServerMessageHandler extends NettyServerChannelHandlerLayer {
     }
 
     @Override
-    public void updateWorkerInfo(UUID workerUUID, String workerName) {
-        EntryPoint.LOGGER_INST.info("\u001B[36mWorker \u001B[32m{}\u001B[36m (UUID: \u001B[33m{}\u001B[36m) connected\u001B[0m", workerName, workerUUID);
+    public void updateWorkerInfo(UUID workerUUID, String workerName, boolean allowModelUpload) {
+        EntryPoint.LOGGER_INST.info("\u001B[36mWorker \u001B[32m{}\u001B[36m (UUID: \u001B[33m{}\u001B[36m) connected, allow model upload: {}\u001B[0m", workerName, workerUUID, allowModelUpload);
 
         this.workerName = workerName;
         this.workerUUID = workerUUID;
+        this.allowModelUpload = allowModelUpload;
 
         Freesia.registedWorkers.put(workerUUID, this);
 

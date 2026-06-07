@@ -21,6 +21,10 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class RealPlayerYsmPacketProxyImpl extends YsmPacketProxyLayer {
+    private static final String OYSM_HANDSHAKE_BRAND = "open_ysm:v1";
+
+    private record HandshakeCapabilities(boolean canSwitchModel, boolean canUploadModel) {
+    }
 
     public RealPlayerYsmPacketProxyImpl(Player player) {
         super(player);
@@ -92,13 +96,21 @@ public class RealPlayerYsmPacketProxyImpl extends YsmPacketProxyLayer {
         if (packetId == YsmProtocolMetaFile
                 .getS2CPacketId(FreesiaConstants.YsmProtocolMetaConstants.Clientbound.HAND_SHAKE_CONFIRMED)) {
             final String backendVersion = mcBuffer.readUtf();
-            boolean canSwitchModel = true;
-            if (mcBuffer.isReadable()) {
-                canSwitchModel = mcBuffer.readBoolean();
-            }
+            HandshakeCapabilities capabilities = parseHandshakeCapabilities(mcBuffer);
+            boolean canSwitchModel = capabilities.canSwitchModel();
+            boolean canUploadModel = capabilities.canUploadModel() || isAnyWorkerModelUploadAllowed();
 
             Freesia.LOGGER.info("Replying ysm client with server version {}.Can switch model? : {}", backendVersion,
                     canSwitchModel);
+            Freesia.LOGGER.info("Replying ysm client with server version {}.Can upload model? : {}", backendVersion,
+                    canUploadModel);
+
+            FriendlyByteBuf normalizedPacket = new FriendlyByteBuf(Unpooled.buffer());
+            normalizedPacket.writeByte(YsmProtocolMetaFile
+                    .getS2CPacketId(FreesiaConstants.YsmProtocolMetaConstants.Clientbound.HAND_SHAKE_CONFIRMED));
+            normalizedPacket.writeUtf(backendVersion);
+            normalizedPacket.writeUtf(OYSM_HANDSHAKE_BRAND);
+            normalizedPacket.writeBoolean(canUploadModel);
 
             if (this.hasHandshaked) {
                 FriendlyByteBuf c2sBuf = new FriendlyByteBuf(Unpooled.buffer());
@@ -114,10 +126,10 @@ public class RealPlayerYsmPacketProxyImpl extends YsmPacketProxyLayer {
                             YsmMapperPayloadManager.YSM_CHANNEL_KEY_ADVENTURE, data));
                 }
 
-                return ProxyComputeResult.ofDrop();
+                return ProxyComputeResult.ofModify(normalizedPacket);
             }
 
-            return ProxyComputeResult.ofPass();
+            return ProxyComputeResult.ofModify(normalizedPacket);
         }
 
         if (packetId == YsmProtocolMetaFile
@@ -192,6 +204,44 @@ public class RealPlayerYsmPacketProxyImpl extends YsmPacketProxyLayer {
         }
 
         return ProxyComputeResult.ofPass();
+    }
+
+    private static boolean isAnyWorkerModelUploadAllowed() {
+        return Freesia.registedWorkers.values().stream()
+                .anyMatch(com.nguyendevs.freesia.velocity.network.backend.MasterServerMessageHandler::isAllowModelUpload);
+    }
+
+    private static HandshakeCapabilities parseHandshakeCapabilities(FriendlyByteBuf mcBuffer) {
+        boolean canSwitchModel = true;
+        boolean canUploadModel = false;
+        int readableBytes = mcBuffer.readableBytes();
+
+        if (readableBytes == 1) {
+            boolean singleFlag = mcBuffer.readBoolean();
+            return new HandshakeCapabilities(singleFlag, singleFlag);
+        }
+
+        if (readableBytes > 1) {
+            int readerIndex = mcBuffer.readerIndex();
+            try {
+                String brand = mcBuffer.readUtf();
+                if (OYSM_HANDSHAKE_BRAND.equals(brand)) {
+                    if (mcBuffer.isReadable()) {
+                        canUploadModel = mcBuffer.readBoolean();
+                    }
+                } else {
+                    mcBuffer.readerIndex(readerIndex);
+                    canSwitchModel = mcBuffer.readBoolean();
+                }
+            } catch (RuntimeException ignored) {
+                mcBuffer.readerIndex(readerIndex);
+                if (mcBuffer.isReadable()) {
+                    canSwitchModel = mcBuffer.readBoolean();
+                }
+            }
+        }
+
+        return new HandshakeCapabilities(canSwitchModel, canUploadModel);
     }
 
     @Override
